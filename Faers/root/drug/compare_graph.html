@@ -1,0 +1,31 @@
+[% WRAPPER wrapper.html
+    js_arr = ['https://cdn.plot.ly/plotly-latest.min.js']
+%]
+    <div id="myDiv"><!-- Plotly chart will be drawn inside this DIV --></div>
+    <script>  
+        var trace1 = {
+            x: [% pts %],
+            y: [% count_pts %],
+            name: "[% drugname %]",
+            type: 'bar'
+        };
+        var trace2 = {
+            x: [% pts_compare %],
+            y: [% count_pts_compare %],
+            name: "[% compare_drugname %]",
+            type: 'bar'
+        };
+        
+        var trace3 = {
+            x: [% pts2 %],
+            y: [% count_pts2 %],
+            name: "[% compare_drugname_2 %]",
+            type: 'bar'
+        };
+        var data = [trace1, trace2, trace3];
+        console.log(data);
+        var layout = {barmode: 'group'};
+
+        Plotly.newPlot('myDiv', data, layout);
+    </script>
+[% END %]
