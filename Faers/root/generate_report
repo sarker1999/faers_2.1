@@ -1,0 +1,70 @@
+
+
+function check_form_validity() {
+    var valid = $('#myForm').isValid(null, null, true);
+    if (valid) {
+        $('#btn-submit').prop('disabled', false);
+    }
+    else {
+        $('#btn-submit').prop('disabled', true);
+    }
+    return valid;
+}
+var drugCount = 0;
+var otherNumber = [];
+var allData = "";
+
+function generateNumberQuery(){
+    drugCount = document.getElementById("groups").value;
+    console.log(drugCount);
+    for (var counter=1; counter<=drugCount; counter++){
+        var newTextBoxDiv = $(document.createElement('div'))
+            .attr("id", 'drug_number' + counter);
+
+        newTextBoxDiv.after().html('<label>Number of other names for Drug #'+ counter + ' : </label>' +
+            '<input type="text" name="report_number_drug' + counter +
+            '" id="report_number_drug' + counter + '" value="" >');
+
+        newTextBoxDiv.appendTo("#drugContainer");
+    }
+    var button = $('<button onclick="generateNameQuery()">Next</button>');
+    button.appendTo("#drugContainer");
+}
+
+function generateNameQuery(){
+    for (var counter = 1; counter<=drugCount; counter++){
+        otherNumber[counter-1] = document.getElementById("report_number_drug"+counter).value;
+        console.log(otherNumber[counter-1]);
+    }
+    for (var counter = 1; counter<=drugCount; counter++){
+        var newTextBoxDiv = $(document.createElement('div'))
+            .attr("id", 'drug_name' + counter);
+
+        newTextBoxDiv.after().html('<label>Name of Drug #'+ counter + ' : </label>' +
+            '<input type="text" name="report_name_drug' + counter +
+            '" id="report_name_drug' + counter + '" value="" >');
+        newTextBoxDiv.appendTo('#drugContainer');
+        for (var count = 1; count<=otherNumber[counter-1]; count++){
+            var newTextBoxDiv = $(document.createElement('div'))
+                .attr("id", 'drug_name_other' + count);
+
+            newTextBoxDiv.after().html('<label>Other names of Drug #'+ counter + ' : </label>' +
+                '<input type="text" name="report_other_name_drug' + counter + count +
+                '" id="report_other_name_drug' + counter + count + '" value="" >');
+            newTextBoxDiv.appendTo('#drugContainer');
+        }
+    }
+    var button = $('<button onclick="passData()">Confirm</button>');
+    button.appendTo("#drugContainer");
+}
+
+function passData(){
+
+    for (var counter = 1; counter<=drugCount; counter++){
+        allData = allData + "." + document.getElementById("report_name_drug"+counter).value;
+        for (var count = 1; count<=otherNumber[counter-1]; count++){
+            allData = allData + " " + document.getElementById("report_other_name_drug" + counter + count).value;
+        }
+    }
+    console.log(allData);
+}

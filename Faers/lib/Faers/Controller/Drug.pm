@@ -99,6 +99,16 @@ sub generate_graph {
     return ( \@pts, \@count_pts );
 }
 
+sub report : Local {
+    my ( $self, $c ) = @_;
+
+    my $report = $c->request->params->{generate_report};
+
+    $c->stash->{generate_report} = $report;
+    $c->stash->{template}        = 'drug/drug_data.html';
+}
+
+
 =head2 show_screen
 Args: nothing
 Return: nothing
