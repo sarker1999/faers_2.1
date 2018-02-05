@@ -1,11 +1,14 @@
 [% WRAPPER wrapper.html %]
 [% css_arr = ["/static/css/styles.css", "//code.jquery.com/ui/1.11.4/themes/sunny/jquery-ui.css"] %]
+[% js_arr = ["/static/js/process_autocomplete.js"] %]   
+
 <h1>Welcome to Drug Data</h1>
 <p>This contains data from FDA from 2014.</p>
 <p>Only one record will be shown by default if number of records is not specified.</p>
 <p>Graphs only take drugname and date into consideration.</p>
 <p>At least one of the folllowing fields should have some input: Drug name, Side effect, Indication for use.</p>
 <hr>
+<a href = "http://localhost:3000/drug/generate_grouped_report">Click here to generate a grouped report</a>
 <form method="POST" id="myForm">
     <p>
     <label>Drug name:</label>
@@ -97,13 +100,6 @@
 
     <input style="display:none;" id="generate_report"  name="generate_report" value="" />
 
-    <div id = "drugContainer">
-        <div id = "numbers">
-            <label> Number of drugs </label>
-            <input type = "text" id = "groups" name = "groups">
-            <button onclick="generateNumberQuery()">Next</button>
-        </div>
-    </div>
 
     <p>
     <label></label>
@@ -167,64 +163,6 @@ function check_form_validity() {
         $('#btn-submit').prop('disabled', true);
     }
     return valid;
-}
-var drugCount = 0;
-var otherNumber = [];
-var allData = "";
-
-function generateNumberQuery(){
-    drugCount = document.getElementById("groups").value;
-    console.log(drugCount);
-    for (var counter=1; counter<=drugCount; counter++){
-        var newTextBoxDiv = $(document.createElement('div'))
-            .attr("id", 'drug_number' + counter);
-
-        newTextBoxDiv.after().html('<label>Number of other names for Drug #'+ counter + ' : </label>' +
-            '<input type="text" name="report_number_drug' + counter +
-            '" id="report_number_drug' + counter + '" value="" >');
-
-        newTextBoxDiv.appendTo("#drugContainer");
-    }
-    var button = $('<button onclick="generateNameQuery()">Next</button>');
-    button.appendTo("#drugContainer");
-}
-
-function generateNameQuery(){
-    for (var counter = 1; counter<=drugCount; counter++){
-        otherNumber[counter-1] = document.getElementById("report_number_drug"+counter).value;
-        console.log(otherNumber[counter-1]);
-    }
-    for (var counter = 1; counter<=drugCount; counter++){
-        var newTextBoxDiv = $(document.createElement('div'))
-            .attr("id", 'drug_name' + counter);
-
-        newTextBoxDiv.after().html('<label>Name of Drug #'+ counter + ' : </label>' +
-            '<input type="text" name="report_name_drug' + counter +
-            '" id="report_name_drug' + counter + '" value="" >');
-        newTextBoxDiv.appendTo('#drugContainer');
-        for (var count = 1; count<=otherNumber[counter-1]; count++){
-            var newTextBoxDiv = $(document.createElement('div'))
-                .attr("id", 'drug_name_other' + count);
-
-            newTextBoxDiv.after().html('<label>Other names of Drug #'+ counter + ' : </label>' +
-                '<input type="text" name="report_other_name_drug' + counter + count +
-                '" id="report_other_name_drug' + counter + count + '" value="" >');
-            newTextBoxDiv.appendTo('#drugContainer');
-        }
-    }
-    var button = $('<button onclick="passData()">Confirm</button>');
-    button.appendTo("#drugContainer");
-}
-
-function passData(){
-
-    for (var counter = 1; counter<=drugCount; counter++){
-        allData = allData + "." + document.getElementById("report_name_drug"+counter).value;
-        for (var count = 1; count<=otherNumber[counter-1]; count++){
-            allData = allData + " " + document.getElementById("report_other_name_drug" + counter + count).value;
-        }
-    }
-    console.log(allData);
 }
 
 /*
@@ -290,3 +228,4 @@ function submitForm() {
                 [% PROCESS script %]
 
                 [% END %]
+                

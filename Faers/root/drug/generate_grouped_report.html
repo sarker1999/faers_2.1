@@ -1,0 +1,162 @@
+[% WRAPPER wrapper.html %]
+[% css_arr = ["/static/css/styles.css", "//code.jquery.com/ui/1.11.4/themes/sunny/jquery-ui.css"] %]
+<form method = "POST" id = "myForm">  
+<div id = "drugContainer">
+    <div id = "numbers">
+        <label> Number of drugs </label>
+        <input id = "groups" name = "groups">
+        <button type = button onclick="generateNumberQuery()">Next</button>
+    </div>
+</div>
+
+<input style="display:none;" id="allData"  name="allData" value="" />
+    <p>
+    <label>Output:</label>
+    <select name="action" id = "output">
+        <option value='show_screen'>Screen</option>
+        <option value='download/csv'>CSV</option>
+        <option value='download/tsv'>TAB</option>
+        <option value='graph'>GRAPH</option>
+        <option value='show_grouped_report'>Generate Report</option>
+    </select>
+    </p>
+
+
+
+    <p>
+    <label></label>
+    <input type="submit" value="Request">
+    <input type="reset">
+    </p>
+
+</form>
+[% BLOCK script %] 
+<script>
+
+var drugCount = 0;
+var otherNumber = [];
+var allData = "";
+
+function generateNumberQuery(){
+    drugCount = document.getElementById("groups").value;
+    console.log(drugCount);
+    for (var counter=1; counter<=drugCount; counter++){
+        var newTextBoxDiv = $(document.createElement('div'))
+            .attr("id", 'drug_number' + counter);
+
+        newTextBoxDiv.after().html('<label>Number of other names for Drug #'+ counter + ' : </label>' +
+            '<input type="text" name="report_number_drug' + counter +
+            '" id="report_number_drug' + counter + '" value="" >');
+
+        newTextBoxDiv.appendTo("#drugContainer");
+    }
+    var button = $('<button type = button onclick="generateNameQuery()">Next</button>');
+    button.appendTo("#drugContainer");
+}
+
+function generateNameQuery(){
+    for (var counter = 1; counter<=drugCount; counter++){
+        otherNumber[counter-1] = document.getElementById("report_number_drug"+counter).value;
+        console.log(otherNumber[counter-1]);
+    }
+    for (var counter = 1; counter<=drugCount; counter++){
+        var newTextBoxDiv = $(document.createElement('div'))
+            .attr("id", 'drug_name' + counter);
+
+        newTextBoxDiv.after().html('<label>Name of Drug #'+ counter + ' : </label>' +
+            '<input type="text" name="report_name_drug' + counter +
+            '" id="report_name_drug' + counter + '" value="" >');
+        newTextBoxDiv.appendTo('#drugContainer');
+        
+$("#report_name_drug"+counter).autocomplete({
+    minLength: 3,
+    source: function(request, response) {
+        predict(cache_drug, request, response, "drug_name");
+    }
+});
+        
+        for (var count = 1; count<=otherNumber[counter-1]; count++){
+            var newTextBoxDiv = $(document.createElement('div'))
+                .attr("id", 'drug_name_other' + count);
+
+            newTextBoxDiv.after().html('<label>Other names of Drug #'+ counter + ' : </label>' +
+                '<input type="text" name="report_other_name_drug' + counter + count +
+                '" id="report_other_name_drug' + counter + count + '" value="" >');
+            newTextBoxDiv.appendTo('#drugContainer');
+
+$("#report_other_name_drug"+ counter + count).autocomplete({
+    minLength: 3,
+    source: function(request, response) {
+        predict(cache_drug, request, response, "drug_name");
+    }
+});
+            
+        }
+    }
+    var button = $('<button type = button onclick="passData()">Confirm</button>');
+    button.appendTo("#drugContainer");
+}
+
+function passData(){
+
+    for (var counter = 1; counter<=drugCount; counter++){
+        allData = allData + ".." + document.getElementById("report_name_drug"+counter).value; //.. to seperate groups
+        for (var count = 1; count<=otherNumber[counter-1]; count++){
+            allData = allData + ";;" + document.getElementById("report_other_name_drug" + counter + count).value;
+            //;; to seperate different drug names of the same group
+        }
+    }
+    
+        var view_result = $('<a href = "http://localhost:3000/drug/show_grouped_report">View Result</a>');
+        view_result.appendTo("#drugContainer");
+    document.getElementById("allData").value = allData;
+    console.log(document.getElementById("allData").value);
+}
+
+var cache_drug = {};
+var cache_se = {};
+var cache_iu = {};
+
+
+function predict(cache, request, response, field) {
+    var req = request.term;
+    var term = req.substring(0, 3);
+
+    if (term in cache) {
+        if (req in cache) {
+            response(cache[req]);
+            return;
+        } else {
+            var length = req.length;
+
+            var sliced;
+            while (length > 3) {
+                sliced = req.substring(0, length - 1);
+
+                if (sliced in cache) {
+
+                    cache[req] = $.grep(cache[sliced], function(n, i) {
+                        return n.toUpperCase().includes(req.toUpperCase());
+                    });
+
+                    response(cache[req]);
+                    return;
+                    break;
+                }
+                length = length - 1;
+            }
+        }
+    }
+
+    $.getJSON('/drug/suggest_' + field, request, function(data, status, xhr) {
+        cache[term] = data;
+        response(data);
+    });
+}
+</script>
+[% END %] 
+[% PROCESS script %]
+
+[% END %]
+
+

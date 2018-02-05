@@ -108,6 +108,34 @@ sub report : Local {
     $c->stash->{template}        = 'drug/drug_data.html';
 }
 
+sub generate_grouped_report : Local {
+    my ( $self, $c, $type ) = @_;
+    $c->stash->{template} = 'drug/generate_grouped_report.html';
+}
+
+sub show_grouped_report : Local {
+    my ( $self, $c ) = @_;
+    my $params = $c->req->params;
+    my $bleh  = $params->{groups} || 'error';
+
+    my $sep_char  = ',';
+    my $extension = 'csv';
+    #my @display_results = $c->request->params->{allData};
+    my $csv = Text::CSV->new( { sep_char => $sep_char } );
+    #my $bleh = $c->req->params->{'groups'} ;
+    my $csv_string = $bleh;
+=pod
+    for my $display_result (@display_results) {
+        $csv->combine(
+            $display_result
+        );
+        $csv_string .= $csv->string . "\n";
+    }
+=cut
+    $c->response->content_type("text/$extension");
+    $c->response->header( 'Content-Disposition' => "attachment; filename=drug_data.$extension" );
+    $c->response->body($csv_string);
+}
 
 =head2 show_screen
 Args: nothing
