@@ -7,8 +7,8 @@ __PACKAGE__->config(
     schema_class => 'FaersDB',
     
     connect_info => {
-        dsn => 'dbi:mysql:dbname=fears',
-        user => 'fears',
+        dsn => 'dbi:mysql:dbname=faers',
+        user => 'root',
         password => '',
     }
 );

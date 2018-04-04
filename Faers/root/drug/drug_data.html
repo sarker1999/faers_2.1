@@ -2,7 +2,7 @@
 [% css_arr = ["/static/css/styles.css", "//code.jquery.com/ui/1.11.4/themes/sunny/jquery-ui.css"] %]
 [% js_arr = ["/static/js/process_autocomplete.js"] %]   
 
-<h1>Welcome to Drug Data</h1>
+<h1>Welcome to Drug Data!</h1>
 <p>This contains data from FDA from 2014.</p>
 <p>Only one record will be shown by default if number of records is not specified.</p>
 <p>Graphs only take drugname and date into consideration.</p>
@@ -98,7 +98,6 @@
     </select>
     </p>
 
-    <input style="display:none;" id="generate_report"  name="generate_report" value="" />
 
 
     <p>
@@ -165,35 +164,6 @@ function check_form_validity() {
     return valid;
 }
 
-/*
-            var preference=prompt("Do you want to generate a report of a specific drug type using some javascript magic?","y/n");
-            if (preference==='y'){
-                alert("You are now entering a mystical world");
-                var drugType = prompt("Please enter the drug type", "<name goes here>");
-                var drugCount = prompt("Please enter the number of drug the type contains","");
-//var highestCount = prompt("Please enter the highest number of other names for a drug","");
-                var storage = "";
-                var nameContainer = [[]];
-                for (var i=0; i<drugCount;i++){
-                    nameContainer[i]=[];
-                    storage = storage + ".";
-                    nameContainer[i][0]=prompt("Enter group","");
-                    storage = storage + nameContainer[i][0] + " ";
-                    var otherNumber=prompt("Please enter the number of drugs under this","")
-                    for (var j=1; j<=otherNumber; j++){
-                        nameContainer[i][j]=prompt("Enter name", "");
-                        storage = storage + nameContainer[i][j] + " ";
-                    }
-                }
-                alert(storage);
-            }
-            else{
-                alert("You are now continuing your sad little normal life");
-                document.body.innerHTML = "< input type = text >";
-            }
-
-            $('input[id=generate_report]').val(storage);
- */          
 $('#dname').blur(function() {
     if ($('#dname').val().trim() !== "" && check_form_validity()) {
         $('.drug_1').show();
@@ -228,4 +198,4 @@ function submitForm() {
                 [% PROCESS script %]
 
                 [% END %]
-                
+

@@ -10,24 +10,6 @@
 </div>
 
 <input style="display:none;" id="allData"  name="allData" value="" />
-    <p>
-    <label>Output:</label>
-    <select name="action" id = "output">
-        <option value='show_screen'>Screen</option>
-        <option value='download/csv'>CSV</option>
-        <option value='download/tsv'>TAB</option>
-        <option value='graph'>GRAPH</option>
-        <option value='show_grouped_report'>Generate Report</option>
-    </select>
-    </p>
-
-
-
-    <p>
-    <label></label>
-    <input type="submit" value="Request">
-    <input type="reset">
-    </p>
 
 </form>
 [% BLOCK script %] 
@@ -36,6 +18,7 @@
 var drugCount = 0;
 var otherNumber = [];
 var allData = "";
+var highestOtherNumber = 0;
 
 function generateNumberQuery(){
     drugCount = document.getElementById("groups").value;
@@ -57,6 +40,9 @@ function generateNumberQuery(){
 function generateNameQuery(){
     for (var counter = 1; counter<=drugCount; counter++){
         otherNumber[counter-1] = document.getElementById("report_number_drug"+counter).value;
+        if (otherNumber[counter-1]>highestOtherNumber){
+            highestOtherNumber = otherNumber[counter-1];
+        }
         console.log(otherNumber[counter-1]);
     }
     for (var counter = 1; counter<=drugCount; counter++){
@@ -98,6 +84,7 @@ $("#report_other_name_drug"+ counter + count).autocomplete({
 }
 
 function passData(){
+    allData = drugCount + " " + highestOtherNumber;
 
     for (var counter = 1; counter<=drugCount; counter++){
         allData = allData + ".." + document.getElementById("report_name_drug"+counter).value; //.. to seperate groups
@@ -107,8 +94,8 @@ function passData(){
         }
     }
     
-        var view_result = $('<a href = "http://localhost:3000/drug/show_grouped_report">View Result</a>');
-        view_result.appendTo("#drugContainer");
+    var view_result = $('<input type="submit" id = "btn-submit" value="Request" onclick="return submitForm()">')
+    view_result.appendTo("#drugContainer");
     document.getElementById("allData").value = allData;
     console.log(document.getElementById("allData").value);
 }
@@ -153,6 +140,13 @@ function predict(cache, request, response, field) {
         response(data);
     });
 }
+function submitForm() {
+    var output = "show_grouped_report";
+
+    $('#myForm').attr('action', '/drug/' + output);
+    return true;
+}
+
 </script>
 [% END %] 
 [% PROCESS script %]

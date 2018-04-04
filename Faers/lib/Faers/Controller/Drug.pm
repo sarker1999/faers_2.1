@@ -115,15 +115,31 @@ sub generate_grouped_report : Local {
 
 sub show_grouped_report : Local {
     my ( $self, $c ) = @_;
-    my $params = $c->req->params;
-    my $bleh  = $params->{groups} || 'error';
-
+    my $params    = $c->req->params;
+    my $raw_data  = $params->{allData} || 'error';
     my $sep_char  = ',';
     my $extension = 'csv';
-    #my @display_results = $c->request->params->{allData};
-    my $csv = Text::CSV->new( { sep_char => $sep_char } );
-    #my $bleh = $c->req->params->{'groups'} ;
-    my $csv_string = $bleh;
+    my $csv       = Text::CSV->new( { sep_char => $sep_char } );
+
+    my @extracted_group = split /\.\./, $raw_data;
+    my @group_numbers   = split / /,    $extracted_group[0];
+    my @split_groups;
+    for ( my $i = 0 ; $i < $group_numbers[0] ; $i++ ) {
+        for ( my $j = 0 ; $j < $group_numbers[1] ; $j++ ) {
+            $split_groups[$i][$j] = "hou";
+        }
+    }
+    my @temp;
+    for ( my $i = 0 ; $i < $group_numbers[0] ; $i++ ) {
+        @temp = split /;;/, $extracted_group[ $i + 1 ];
+        my $j = 0;
+        foreach (@temp) {
+            $split_groups[$i][$j] = $_;
+            $j = $j + 1;
+        }
+    }
+    my $csv_string = $extracted_group[0];
+
 =pod
     for my $display_result (@display_results) {
         $csv->combine(
@@ -132,6 +148,7 @@ sub show_grouped_report : Local {
         $csv_string .= $csv->string . "\n";
     }
 =cut
+
     $c->response->content_type("text/$extension");
     $c->response->header( 'Content-Disposition' => "attachment; filename=drug_data.$extension" );
     $c->response->body($csv_string);
@@ -233,17 +250,37 @@ sub suggest_drug_name : Local {
     my $term     = $c->request->params->{term};
     my $drugs_rs = $c->model('FaersDB::Drug')->search_rs(
         {
-            drugname => { -like => "$term%" }
+            #drugname => { -like => "$term%" }
+            -or => [
+                drugname => { -like => "$term%" },
+                prod_ai  => { -like => "$term%" },
+            ],
         },
         {
-            select   => ['drugname'],
-            distinct => 1
+            select   => ['drugname', 'prod_ai'],#, 'prod_ai'],
+            #distinct => 1
+            group_by => [ 'drugname','prod_ai'],
         }
     );
     my @drugs;
     while ( my $drug = $drugs_rs->next ) {
-        push @drugs, $drug->drugname;
+        push @drugs, $drug->drugname."(".$drug->prod_ai.")";
     }
+=pod
+    my $prod_rs = $c->model('FaersDB::Drug')->search_rs(
+        {
+            prod_ai => { -like => "$term%" }
+        },
+        {
+            select   => ['drugname', 'prod_ai'],
+            distinct => 1
+        }
+    );
+    
+    while ( my $prod = $prod_rs->next ) {
+        push @drugs, $prod->drugname."(".$prod->prod_ai.")";
+    }
+=cut
 
     $c->response->content_type('application/json');
     $c->response->body( objToJson( \@drugs ) );
