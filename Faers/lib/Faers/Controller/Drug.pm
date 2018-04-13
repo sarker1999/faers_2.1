@@ -140,14 +140,6 @@ sub show_grouped_report : Local {
     }
     my $csv_string = $extracted_group[0];
 
-=pod
-    for my $display_result (@display_results) {
-        $csv->combine(
-            $display_result
-        );
-        $csv_string .= $csv->string . "\n";
-    }
-=cut
 
     $c->response->content_type("text/$extension");
     $c->response->header( 'Content-Disposition' => "attachment; filename=drug_data.$extension" );
@@ -216,10 +208,11 @@ sub generate_query_result {
     my $date_to     = $params->{dt}      || 20171231;
     my $limit       = $params->{'lim'}   || 1;
 
-    my $valid = validate( $drugname, $side_effect, $indication );
-    if ($valid) {
 
-        my $view_search_results_rs = Faers->model('FaersDB::ViewSearchResult')->search_rs(
+    #my $valid = validate( $drugname, $side_effect, $indication );
+    my $valid = 1;
+    if ($valid) {
+        my $view_search_results_rs = Faers->model('FaersDB::ViewSearchResultDrug')->search_rs(
             {},
             {
                 bind => [
@@ -230,6 +223,7 @@ sub generate_query_result {
         );
 
         my @search_results;
+            Faers->log->info('before while');
         while ( my $search_result = $view_search_results_rs->next ) {
             push @search_results, $search_result;
         }
@@ -248,39 +242,19 @@ sub suggest_drug_name : Local {
     my ( $self, $c ) = @_;
 
     my $term     = $c->request->params->{term};
-    my $drugs_rs = $c->model('FaersDB::Drug')->search_rs(
+    my $drugs_rs = $c->model('FaersDB::brand')->search_rs(
         {
-            #drugname => { -like => "$term%" }
-            -or => [
-                drugname => { -like => "$term%" },
-                prod_ai  => { -like => "$term%" },
-            ],
+            brand_generic => { -like => "$term%" }
         },
         {
-            select   => ['drugname', 'prod_ai'],#, 'prod_ai'],
-            #distinct => 1
-            group_by => [ 'drugname','prod_ai'],
+            select   => ['brand_generic'],
+            distinct => 1
         }
     );
     my @drugs;
     while ( my $drug = $drugs_rs->next ) {
-        push @drugs, $drug->drugname."(".$drug->prod_ai.")";
+        push @drugs, $drug->brand_generic;
     }
-=pod
-    my $prod_rs = $c->model('FaersDB::Drug')->search_rs(
-        {
-            prod_ai => { -like => "$term%" }
-        },
-        {
-            select   => ['drugname', 'prod_ai'],
-            distinct => 1
-        }
-    );
-    
-    while ( my $prod = $prod_rs->next ) {
-        push @drugs, $prod->drugname."(".$prod->prod_ai.")";
-    }
-=cut
 
     $c->response->content_type('application/json');
     $c->response->body( objToJson( \@drugs ) );

@@ -2,26 +2,44 @@ $(function() {
     var cache_drug = {};
     var cache_se = {};
     var cache_iu = {};
+    var cache_soc = {};
+    var cache_reaction = {};
     $("#dname, #compare_dname, #compare_dname_2").autocomplete({
         minLength: 3,
         source: function(request, response) {
-            predict(cache_drug, request, response, "drug_name");
+            predict(cache_drug, request, response, "/drug/suggest_drug_name");
         }
     });
 
     $("#se").autocomplete({
         minLength: 3,
         source: function(request, response) {
-            predict(cache_se, request, response, "side_effect");
+            predict(cache_se, request, response, "/drug/suggest_side_effect");
         }
     });
 
     $("#iu").autocomplete({
         minLength: 3,
         source: function(request, response) {
-            predict(cache_iu, request, response, "indication_use");
+            predict(cache_iu, request, response, "/drug/suggest_indication_use");
         }
     });
+
+    $("#soc").autocomplete({
+        minLength: 3,
+        source: function(request, response) {
+            console.log(request);
+            predict(cache_soc, request, response, "/fda/suggest_soc");
+        }
+    });
+
+    $("#reaction_term").autocomplete({
+        minLength: 3,
+        source: function(request, response) {
+            predict(cache_reaction, request, response, "/fda/suggest_reaction");
+        }
+    });
+
 
     function predict(cache, request, response, field) {
         var req = request.term;
@@ -52,11 +70,22 @@ $(function() {
                 }
             }
         }
+        if (field.localeCompare("/fda/suggest_soc")===0){
+            console.log(request);
+            var t = $('#dname').val();
+            request.term = request.term + "," + t;
+            console.log(request.term);
+            $.getJSON(field, request, function(data, status, xhr) {
+                cache[term] = data;
+                response(data);
+            });
 
-        $.getJSON('/drug/suggest_' + field, request, function(data, status, xhr) {
-            cache[term] = data;
-            response(data);
-        });
+        }else{
+            $.getJSON(field, request, function(data, status, xhr) {
+                cache[term] = data;
+                response(data);
+            });
+        }
     }
 
     $("#df_show, #dt_show").datepicker({

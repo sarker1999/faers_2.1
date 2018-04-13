@@ -1,0 +1,145 @@
+[% WRAPPER wrapper_fda.html %]
+[% css_arr = ["/static/css/styles.css", "//code.jquery.com/ui/1.11.4/themes/sunny/jquery-ui.css"] %]
+[% js_arr = ["/static/js/process_autocomplete.js"] %]   
+
+<h1>Welcome to Drug Data!</h1>
+<p>This contains data from FDA from 2014.</p>
+<hr>
+<form method="POST" id="myForm">
+    <p>
+    <label>Drug name:</label>
+    <input id="dname" name="dname" data-validation="alphanumeric" data-validation-allowing="-_/ ()"
+                                                                  data-validation-optional-if-answered="pt, ind">
+    </p>
+    <p>
+    <label>From date: </label>
+    <input type="text" id="df_show">
+    <input type="hidden" id="df" name="df">
+    </p>
+    <p>             
+    <label>To date: </label>
+    <input type="text" id="dt_show">
+    <input type="hidden" id="dt" name="dt">
+    </p>
+    <p>
+    <button onclick = "show_advanced()">Show advanced options</button>
+    <div id = "advanced" style="display: none;">
+    <p>
+    <label>System Organ Class:</label>
+    <input id="soc" name="soc" data-validation="alphanumeric" data-validation-allowing="-_/ ()"
+                                                                  data-validation-optional-if-answered="pt, ind">
+    </p>
+    <p>
+    <label>Reaction term:</label>
+    <input id="reaction_term" name="reaction_term" data-validation="alphanumeric" data-validation-allowing="-_/ ()"
+                                                                  data-validation-optional-if-answered="pt, ind">
+    </p>
+        
+    </div>
+    </p>
+    <p>
+    <label>Output:</label>
+    <select name="action" id = "output">
+        <option value='show_screen'>Screen</option>
+        <option value='download/csv'>CSV</option>
+        <option value='download/tsv'>TAB</option>
+        <option value='report'>REPORT</option>
+    </select>
+    </p>
+    <p>
+    <label></label>
+    <input type="submit" disabled="disabled" id = "btn-submit" value="Request" onclick="return submitForm()">
+    <input type="reset">
+    </p>
+</form>
+<div id="myOverlay" class="overlay">
+</div>
+<div id="myPacMan" class="pacman"><div class="pleaseWait">Please Wait...</div></div>
+[% IF generate_report %]
+[% generate_report %]
+[% END %]
+[% IF display_results %]
+<p>
+<table class="datatable" border=1 id="myData">
+    <tr>
+        <td>System Organ Class</td>
+        <td>Side effect Name</td>
+        <td>Number of occurances</td>
+        <td>Number of Deaths</td>
+    </tr>
+    [% FOREACH row IN display_results %]
+    <tr>
+        <td>[% row.soc_name %]</td>
+        <td>[% row.hlgt_name %]</td>
+        <td>[% row.total %]</td>
+        <td>[% row.deaths %]</td>
+    </tr>
+    [% END %]
+</table>
+
+</p>
+[% END %]
+[% BLOCK script %] 
+
+<script>
+    function show_advanced(){
+            var x = document.getElementById("advanced");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+    $.validate({
+        modules: 'logic'
+    });
+
+function check_form_validity() {
+    var valid = $('#myForm').isValid(null, null, true);
+    if (valid) {
+        $('#btn-submit').prop('disabled', false);
+    }
+    else {
+        $('#btn-submit').prop('disabled', true);
+    }
+    return valid;
+}
+
+$('#dname').blur(function() {
+    if ($('#dname').val().trim() !== "" && check_form_validity()) {
+        $('.drug_1').show();
+    }
+});
+
+$('#compare_dname').blur(function() {
+    if ($('#compare_dname').val().trim() !== "" && check_form_validity()) {
+        $('.drug_2').show();
+    }
+});
+
+$('#dname, #se, #iu, #compare_dname_2').blur(check_form_validity);
+
+function submitForm() {
+    if ($('#df').val()>$('#dt').val()){
+        alert('Invalid date range!');
+    }
+    var output = $('#output').val();
+
+    if (!output.match(/(csv|tsv)$/)) {
+        document.getElementById('myForm').style.display = 'none';
+        [% IF data %]
+        document.getElementById('myData').style.display = 'none';
+        [% END %]
+        document.getElementById('myOverlay').style.display = 'block';
+        document.getElementById('myPacMan').style.display = 'block';
+    }
+
+    $('#myForm').attr('action', '/fda/' + output);
+    return true;
+}
+</script>
+                [% END %] 
+                [% PROCESS script %]
+
+                [% END %]
+
