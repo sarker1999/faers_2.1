@@ -186,45 +186,47 @@ sub suggest_soc : Local {
     $c->response->body( objToJson( \@soc ) );
 }
 
-=pod
-        my @search_results;
-            Faers->log->info('before while');
-        while ( my $search_result = $view_search_results_rs->next ) {
-            push @search_results, $search_result;
-        }
-
-        return @search_results;
-    }
-
-
-
-    my ( $self, $c ) = @_;
-
-    my $term     = $c->request->params->{term};
-    my $soc_rs = $c->model('FaersDB::MeddraSocTerm')->search_rs(
-        {
-            soc_name => { -like => "$term%" }
-        },
-        {
-            select   => ['soc_name'],
-            distinct => 1
-        }
-    );
-    my @soc;
-    while ( my $soc = $soc_rs->next ) {
-        push @soc, $soc->soc_name;
-    }
-
-    $c->response->content_type('application/json');
-    $c->response->body( objToJson( \@soc ) );
-=cut
 }
 
 sub suggest_reaction : Local {
+
+    my ( $self, $c ) = @_;
+
+    my $passed_data     = $c->request->params->{term};
+    my ($term, $drugname, $soc) = split (',',$passed_data);
+    
+    Faers->log->info('before while $term $drugname');
+
+    #my $drugname    = $c->request->params->{'dname'} || '';
+    #my $drugname = "Harvoni(LEDIPASVIR/SOFOSBUVIR)";
+    my $valid = 1;
+    if ($valid) {
+        my $hlgt_rs = Faers->model('FaersDB::ViewHlgt')->search_rs(
+            {},
+            {
+                bind => [
+                        $drugname, $soc, "$term%"
+                #    "$drugname%", $code_num, "$side_effect%", $outcome, "$source%", "$indication%",
+                #    $date_from,   $date_to,  $limit
+                ],
+            }
+        );
+    my @hlgt;
+    while ( my $hlgt = $hlgt_rs->next ) {
+        push @hlgt, $hlgt->hlgt_name;
+    }
+
+    $c->response->content_type('application/json');
+    $c->response->body( objToJson( \@hlgt ) );
+}
+
+
+
+=pod
     my ( $self, $c ) = @_;
 
     my $term     = $c->request->params->{term};
-    my $hlgt_rs = $c->model('FaersDB::MeddraHlgtPrefTerm')->search_rs(
+    my $hlgt_rs = $c->model('FaersDB::ViewHlgt')->search_rs(
         {
             hlgt_name => { -like => "$term%" }
         },
@@ -240,6 +242,7 @@ sub suggest_reaction : Local {
 
     $c->response->content_type('application/json');
     $c->response->body( objToJson( \@hlgt ) );
+=cut
 }
 
 sub download : Local : Args {

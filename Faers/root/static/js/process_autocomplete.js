@@ -72,20 +72,22 @@ $(function() {
         }
         if (field.localeCompare("/fda/suggest_soc")===0){
             console.log(request);
-            var t = $('#dname').val();
-            request.term = request.term + "," + t;
+            var drug = $('#dname').val();
+            request.term = request.term + "," + drug;
             console.log(request.term);
-            $.getJSON(field, request, function(data, status, xhr) {
-                cache[term] = data;
-                response(data);
-            });
-
-        }else{
-            $.getJSON(field, request, function(data, status, xhr) {
-                cache[term] = data;
-                response(data);
-            });
         }
+        if (field.localeCompare("/fda/suggest_reaction")===0){
+            console.log(request);
+            var drug = $('#dname').val();
+            var soc = $('#soc').val();
+            request.term = request.term + "," + drug + "," + soc;
+            console.log(request.term);
+        }
+
+            $.getJSON(field, request, function(data, status, xhr) {
+                cache[term] = data;
+                response(data);
+            });
     }
 
     $("#df_show, #dt_show").datepicker({
