@@ -40,10 +40,12 @@
     <p>
     <label>Output:</label>
     <select name="action" id = "output">
-        <option value='show_screen'>Screen</option>
-        <option value='download/csv'>CSV</option>
-        <option value='download/tsv'>TAB</option>
+        <option value='show_screen'>SCREEN(Summary)</option>
+        <option value='download/csv'>CSV(Summary)</option>
+        <option value='download/tsv'>TAB(Summary)</option>
         <option value='report'>REPORT</option>
+        <option value='download_report/csv'>CSV(Listed report)</option>
+        <option value='download_report/tsv'>TAB(Listed report)</option>
     </select>
     </p>
     <p>
@@ -79,6 +81,28 @@
 
 </p>
 [% END %]
+[% IF display_report %]
+<p>
+<table class="datatable" border=1 id="myData">
+    <tr>
+        <td>Date</td>
+        <td>Age (yrs) </td>
+        <td>Gender</td>
+        <td>MedDRA reaction terms</td>
+    </tr>
+    [% FOREACH row IN display_report %]
+    <tr>
+        <td>[% row.fda_dt %]</td>
+        <td>[% row.age %]</td>
+        <td>[% row.sex %]</td>
+        <td>[% row.hlgt_name %]</td>
+    </tr>
+    [% END %]
+</table>
+</p>
+[% END %]
+
+
 [% BLOCK script %] 
 
 <script>
