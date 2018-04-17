@@ -62,8 +62,7 @@ sub generate_report {
     my $soc           = $params->{soc}           || '';
     my $reaction_term = $params->{reaction_term} || '';
 
-    #my $valid = validate( $drugname, $side_effect, $indication );
-    my $valid = 1;
+    my $valid = validate( $drugname, $date_from, $date_to, $soc, $reaction_term );
     if ($valid) {
         my $view_search_results_rs = Faers->model('FaersDB::ViewReportFDA')->search_rs(
             {},
@@ -100,7 +99,7 @@ sub generate_query_result {
     my $soc           = $params->{soc}           || '';
     my $reaction_term = $params->{reaction_term} || '';
 
-    my $valid = 1;
+    my $valid = validate($drugname, $date_from, $date_to, $soc, $reaction_term);
     if ($valid) {
         my $view_search_results_rs = Faers->model('FaersDB::ViewSearchResultFDA')->search_rs(
             {},
@@ -286,7 +285,8 @@ sub validate {
     }
     if ($value) {
         foreach my $fields (@fields) {
-            if ( $fields =~ m/[^a-zA-Z0-9\\\ ()\-\_]/ ) { $value = 0; }
+            if ( $fields =~ m/[^a-zA-Z0-9\\\ \/()\-\_]/ ) { $value = 0; }
+            #if ( $fields =~ m/[^A-Z]/ ) { $value = 0; }
         }
     }
     return $value;
