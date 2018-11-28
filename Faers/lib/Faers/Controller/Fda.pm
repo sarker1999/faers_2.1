@@ -41,6 +41,13 @@ sub show_screen : Local {
     my @display_results = generate_query_result( $c->request->params );
 
     $c->stash->{display_results} = \@display_results;
+    $c->stash->{drugname} = $c->request->params->{'dname'};
+    $c->stash->{start_date} = $c->request->params->{df};
+    $c->stash->{end_date} = $c->request->params->{dt};
+    $c->stash->{soc_req} = $c->request->params->{soc};
+    $c->stash->{reaction} = $c->request->params->{reaction_term};
+    $c->stash->{sorting} = $c->request->params->{sorting_screen};
+ 
     $c->stash->{template}        = 'fda/fda_data.html';
 }
 
@@ -48,20 +55,28 @@ sub report : Local {
     my ( $self, $c ) = @_;
 
     my @display_report = generate_report( $c->request->params );
-
     $c->stash->{display_report} = \@display_report;
+    $c->stash->{drugname} = $c->request->params->{'dname'};
+    $c->stash->{start_date} = $c->request->params->{df};
+    $c->stash->{end_date} = $c->request->params->{dt};
+    $c->stash->{soc_req} = $c->request->params->{soc};
+    $c->stash->{reaction} = $c->request->params->{reaction_term};
+    $c->stash->{sorting} = $c->request->params->{sorting_screen};
+ 
     $c->stash->{template}        = 'fda/fda_data.html';
+    
+
 }
 
 sub generate_report {
     my $params = shift;
 
-    my $drugname      = $params->{'dname'}       || '';
-    my $date_from     = $params->{df}            || 20140101;
-    my $date_to       = $params->{dt}            || 20171231;
-    my $soc           = $params->{soc}           || '';
-    my $reaction_term = $params->{reaction_term} || '';
-
+    my $drugname      = $params->{'dname'}        || '';
+    my $date_from     = $params->{df}             || 20140101;
+    my $date_to       = $params->{dt}             || 20171231;
+    my $soc           = $params->{soc}            || '';
+    my $reaction_term = $params->{reaction_term}  || '';
+    my $sort          = $params->{sorting_report} || '';
     my $valid = validate( $drugname, $date_from, $date_to, $soc, $reaction_term );
     if ($valid) {
         my $view_search_results_rs = Faers->model('FaersDB::ViewReportFDA')->search_rs(
@@ -71,6 +86,7 @@ sub generate_report {
                     $drugname, $date_from, $date_to
 
                 ],
+                order_by => $sort
             }
         );
 
@@ -93,13 +109,14 @@ Returns the passed has after populating it with query result
 sub generate_query_result {
     my $params = shift;
 
-    my $drugname      = $params->{'dname'}       || '';
-    my $date_from     = $params->{df}            || 20140101;
-    my $date_to       = $params->{dt}            || 20171231;
-    my $soc           = $params->{soc}           || '';
-    my $reaction_term = $params->{reaction_term} || '';
+    my $drugname      = $params->{'dname'}        || '';
+    my $date_from     = $params->{df}             || 20140101;
+    my $date_to       = $params->{dt}             || 20171231;
+    my $soc           = $params->{soc}            || '';
+    my $reaction_term = $params->{reaction_term}  || '';
+    my $sort          = $params->{sorting_screen} || '';
 
-    my $valid = validate($drugname, $date_from, $date_to, $soc, $reaction_term);
+    my $valid = validate( $drugname, $date_from, $date_to, $soc, $reaction_term );
     if ($valid) {
         my $view_search_results_rs = Faers->model('FaersDB::ViewSearchResultFDA')->search_rs(
             {},
@@ -107,9 +124,8 @@ sub generate_query_result {
                 bind => [
                     $drugname, "$soc%", "$reaction_term%", $date_from, $date_to
 
-                      #    "$drugname%", $code_num, "$side_effect%", $outcome, "$source%", "$indication%",
-                      #    $date_from,   $date_to,  $limit
                 ],
+                order_by => $sort
             }
         );
 
@@ -117,9 +133,9 @@ sub generate_query_result {
         Faers->log->info('before while');
         while ( my $search_result = $view_search_results_rs->next ) {
             push @search_results, $search_result;
+            Faers->log->info($search_result);
         }
-
-        return @search_results;
+    return @search_results;
     }
 }
 
@@ -159,8 +175,6 @@ sub suggest_soc : Local {
 
     Faers->log->info('before while $term $drugname');
 
-    #my $drugname    = $c->request->params->{'dname'} || '';
-    #my $drugname = "Harvoni(LEDIPASVIR/SOFOSBUVIR)";
     my $valid = 1;
     if ($valid) {
         my $soc_rs = Faers->model('FaersDB::ViewSOC')->search_rs(
@@ -169,8 +183,6 @@ sub suggest_soc : Local {
                 bind => [
                     $drugname, "$term%"
 
-                      #    "$drugname%", $code_num, "$side_effect%", $outcome, "$source%", "$indication%",
-                      #    $date_from,   $date_to,  $limit
                 ],
             }
         );
@@ -190,22 +202,18 @@ sub suggest_reaction : Local {
     my ( $self, $c ) = @_;
 
     my $passed_data = $c->request->params->{term};
-    my ( $term, $drugname, $soc ) = split( ',', $passed_data );
+    my ( $term, $soc ) = split( ',', $passed_data );
 
     Faers->log->info('before while $term $drugname');
 
-    #my $drugname    = $c->request->params->{'dname'} || '';
-    #my $drugname = "Harvoni(LEDIPASVIR/SOFOSBUVIR)";
     my $valid = 1;
     if ($valid) {
         my $hlgt_rs = Faers->model('FaersDB::ViewHlgt')->search_rs(
             {},
             {
                 bind => [
-                    $drugname, $soc, "$term%"
+                    $soc, "$term%"
 
-                      #    "$drugname%", $code_num, "$side_effect%", $outcome, "$source%", "$indication%",
-                      #    $date_from,   $date_to,  $limit
                 ],
             }
         );
@@ -222,6 +230,13 @@ sub suggest_reaction : Local {
 
 sub download : Local : Args {
     my ( $self, $c, $type ) = @_;
+    my $drugname = substr($c->request->params->{'dname'},0,3);
+    my $start_date = $c->request->params->{df};
+    my $end_date = $c->request->params->{dt};
+    my $soc_req = substr($c->request->params->{soc},0,3);
+    my $reaction = substr($c->request->params->{reaction_term},0,3);
+    
+    my $name = "sum-".$drugname.$start_date."to".$end_date.$soc_req.$reaction;
 
     my @display_results = generate_query_result( $c->request->params );
 
@@ -240,12 +255,19 @@ sub download : Local : Args {
     }
 
     $c->response->content_type("text/$extension");
-    $c->response->header( 'Content-Disposition' => "attachment; filename=drug_data.$extension" );
+    $c->response->header( 'Content-Disposition' => "attachment; filename=$name.$extension" );
     $c->response->body($csv_string);
 }
 
 sub download_report : Local : Args {
     my ( $self, $c, $type ) = @_;
+    my $drugname = substr($c->request->params->{'dname'},0,3);
+    my $start_date = $c->request->params->{df};
+    my $end_date = $c->request->params->{dt};
+    my $soc_req = substr($c->request->params->{soc},0,3);
+    my $reaction = substr($c->request->params->{reaction_term},0,3);
+    
+    my $name = "list-".$drugname.$start_date."to".$end_date.$soc_req.$reaction;
 
     my @display_results = generate_report( $c->request->params );
 
@@ -264,11 +286,9 @@ sub download_report : Local : Args {
     }
 
     $c->response->content_type("text/$extension");
-    $c->response->header( 'Content-Disposition' => "attachment; filename=drug_data.$extension" );
+    $c->response->header( 'Content-Disposition' => "attachment; filename=$name.$extension" );
     $c->response->body($csv_string);
 }
-
-
 
 =head2 
 Args: @fields
@@ -286,6 +306,7 @@ sub validate {
     if ($value) {
         foreach my $fields (@fields) {
             if ( $fields =~ m/[^a-zA-Z0-9\\\ \/()\-\_]/ ) { $value = 0; }
+
             #if ( $fields =~ m/[^A-Z]/ ) { $value = 0; }
         }
     }

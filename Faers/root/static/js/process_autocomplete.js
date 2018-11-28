@@ -80,12 +80,13 @@ $(function() {
             console.log(request);
             var drug = $('#dname').val();
             var soc = $('#soc').val();
-            request.term = request.term + "," + drug + "," + soc;
+            request.term = request.term + "," + soc;
             console.log(request.term);
         }
 
             $.getJSON(field, request, function(data, status, xhr) {
                 cache[term] = data;
+                console.log(data);
                 response(data);
             });
     }

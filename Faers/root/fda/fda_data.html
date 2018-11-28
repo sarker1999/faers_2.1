@@ -1,5 +1,5 @@
 [% WRAPPER wrapper_fda.html %]
-[% css_arr = ["/static/css/styles.css", "//code.jquery.com/ui/1.11.4/themes/sunny/jquery-ui.css"] %]
+[% css_arr = ["/static/css/styles.css", "//code.jquery.com/ui/1.11.4/themes/overcast/jquery-ui.css"] %]
 [% js_arr = ["/static/js/process_autocomplete.js"] %]   
 
 <h1>Welcome to Drug Data!</h1>
@@ -8,8 +8,7 @@
 <form method="POST" id="myForm">
     <p>
     <label>Drug name:</label>
-    <input id="dname" name="dname" data-validation="alphanumeric" data-validation-allowing="-_/ ()"
-                                                                  data-validation-optional-if-answered="pt, ind">
+    <input id="dname" name="dname" data-validation="alphanumeric" data-validation-allowing="+-_/ ()" >
     </p>
     <p>
     <label>From date: </label>
@@ -21,18 +20,18 @@
     <input type="text" id="dt_show">
     <input type="hidden" id="dt" name="dt">
     </p>
-    <p>
-    <label><button onclick = "show_advanced()">Show advanced options</button></label>
-    <div id = "advanced" style="display: none;">
+    <p><!---
+    <label><button type = "button" id = "ad_b" disabled = "disabled" onclick = "show_advanced()" >Show advanced options</button></label>
+    --><div id = "advanced" style="display: none;">
     <p>
     <label>System Organ Class:</label>
     <input id="soc" name="soc" data-validation="alphanumeric" data-validation-allowing="-_/ ()"
-                                                                  data-validation-optional-if-answered="pt, ind">
+    data-validation-optional-if-answered="dname">
     </p>
     <p>
     <label>Reaction term:</label>
     <input id="reaction_term" name="reaction_term" data-validation="alphanumeric" data-validation-allowing="-_/ ()"
-                                                                  data-validation-optional-if-answered="pt, ind">
+    data-validation-optional-if-answered="dname">
     </p>
         
     </div>
@@ -49,11 +48,37 @@
     </select>
     </p>
     <p>
+    <div id = "sort_report" style = "display: none;">
+    <label>Sort by:</label>
+    <select name="sorting_report" id = "sorting_report">
+        <option value='fda_dt desc'>Date-latest first </option>
+        <option value='fda_dt'>Date-oldest first</option>
+        <option value='age desc'>Age-highest first</option>
+        <option value='age'>Age-lowest first</option>
+    </select>
+    </div>
+    </p>
+    <p>
+    <div id = "sort_screen">
+    <label>Sort by:</label>
+    <select name="sorting_screen" id = "sorting_screen">
+        <option value='soc_name'>System Organ Class (A-Z) </option>
+        <option value='soc_name desc'>System Organ Class (Z-A) </option>
+        <option value='deaths desc'>Number of deaths-highest first </option>
+        <option value='deaths'>Number of deaths-lowest first </option>
+        <option value='total desc'>Number of cases-highest first</option>
+        <option value='total'>Number of cases-lowest first</option>
+    </select>
+    </div>
+    </p>
+    
+    <p>
     <label></label>
     <input type="submit" disabled="disabled" id = "btn-submit" value="Request" onclick="return submitForm()">
     <input type="reset">
     </p>
 </form>
+
 <div id="myOverlay" class="overlay">
 </div>
 <div id="myPacMan" class="pacman"><div class="pleaseWait">Please Wait...</div></div>
@@ -61,6 +86,16 @@
 [% generate_report %]
 [% END %]
 [% IF display_results %]
+<p>
+You Have entered the following details: <br>
+Drugname: [% drugname %]<br>
+Start date: [% start_date %]<br>
+End date: [% end_date %]<br>
+System organ class: [% soc_req %]<br>
+Reaction term: [% reaction %]<br>
+Sort by: [% sorting %]<br>
+
+</p>
 <p>
 <table class="datatable" border=1 id="myData">
     <tr>
@@ -82,6 +117,15 @@
 </p>
 [% END %]
 [% IF display_report %]
+<p>
+You Have entered the following details: <br>
+Drugname: [% drugname %]<br>
+Start date: [% start_date %]<br>
+End date: [% end_date %]<br>
+System organ class: [% soc_req %]<br>
+Reaction term: [% reaction %]<br>
+Sort by: [% sorting %]<br>
+</p>
 <p>
 <table class="datatable" border=1 id="myData">
     <tr>
@@ -106,6 +150,29 @@
 [% BLOCK script %] 
 
 <script>
+    $(document).ready(function() {
+
+  $("#output").change(function() {
+
+    var el = $(this) ;
+            var x = document.getElementById("sort_report");
+            var y = document.getElementById("sort_screen");
+
+    if(el.val() === "download_report/csv" || el.val() === "download_report/tsv" || el.val() === "report") {
+                x.style.display = "block";
+                y.style.display = "none";
+    return false;
+    
+    }
+      else {
+                y.style.display = "block";
+                x.style.display = "none";
+    return false;
+      
+      }
+  });
+
+});
     function show_advanced(){
             var x = document.getElementById("advanced");
             if (x.style.display === "none") {
@@ -113,7 +180,8 @@
             } else {
                 x.style.display = "none";
             }
-        }
+    return false;
+    }
     $.validate({
         modules: 'logic'
     });
@@ -122,9 +190,15 @@ function check_form_validity() {
     var valid = $('#myForm').isValid(null, null, true);
     if (valid) {
         $('#btn-submit').prop('disabled', false);
+        $('#ad_b').prop('disabled', false);
+            var x = document.getElementById("advanced");
+                x.style.display = "block";
+                return false;
+
     }
     else {
         $('#btn-submit').prop('disabled', true);
+        $('#ad_b').prop('disabled', true);
     }
     return valid;
 }
